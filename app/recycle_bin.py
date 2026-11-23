@@ -63,7 +63,10 @@ def _storage_path(row):
         raise ValueError("Stored file path is invalid.")
     root = Path(current_app.config["STORAGE_DIR"]).resolve()
     user_dir = (root / str(row["user_id"])).resolve()
-    path = (user_dir / stored_name).resolve()
+    candidate = user_dir / stored_name
+    if candidate.is_symlink():
+        raise ValueError("Stored file path must not be a symbolic link.")
+    path = candidate.resolve()
     if user_dir.parent != root or path.parent != user_dir:
         raise ValueError("Stored file path is outside its owner directory.")
     return path
@@ -84,7 +87,10 @@ def _backup_paths(connection, row):
         relative = Path(raw)
         if relative.is_absolute() or ".." in relative.parts:
             raise ValueError("A backup path is invalid.")
-        path = (root / relative).resolve()
+        candidate = root / relative
+        if candidate.is_symlink():
+            raise ValueError("Backup path must not be a symbolic link.")
+        path = candidate.resolve()
         if path.parent != expected_dir or root not in path.parents:
             raise ValueError("A backup path is outside its file backup directory.")
         result.append(path)
