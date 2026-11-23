@@ -28,6 +28,7 @@ from .files import (
     _recalculate_used_bytes,
     _user_storage_dir,
 )
+from .versioning import create_initial_backup, remove_expired_backups
 
 bp = Blueprint("uploads", __name__, url_prefix="/api/uploads")
 
@@ -478,6 +479,8 @@ def complete_upload(upload_id):
 
     assembled_path = session_dir / f".assembled-{uuid.uuid4().hex}.tmp"
     final_path = None
+    created_backup = None
+    expired_backups = []
     digest = hashlib.sha256()
     assembled = 0
     timestamp = _to_iso(now)
@@ -553,6 +556,9 @@ def complete_upload(upload_id):
             ),
         )
         file_id = file_cursor.lastrowid
+        created_backup, expired_backups = create_initial_backup(
+            connection, user_id, file_id, final_path
+        )
         connection.execute(
             "UPDATE upload_sessions SET file_id = ? WHERE id = ?",
             (file_id, row["id"]),
@@ -561,15 +567,20 @@ def complete_upload(upload_id):
         connection.commit()
     except ApiError:
         connection.rollback()
+        if created_backup is not None:
+            created_backup.unlink(missing_ok=True)
         if final_path is not None:
             final_path.unlink(missing_ok=True)
         raise
-    except sqlite3.Error:
+    except (sqlite3.Error, OSError):
         connection.rollback()
+        if created_backup is not None:
+            created_backup.unlink(missing_ok=True)
         if final_path is not None:
             final_path.unlink(missing_ok=True)
-        raise ApiError("The upload could not be finalized. Please retry.", 500)
+        raise ApiError("The upload and its initial backup could not be finalized. Please retry.", 500)
 
+    remove_expired_backups(expired_backups)
     shutil.rmtree(session_dir, ignore_errors=True)
 
     return jsonify(
