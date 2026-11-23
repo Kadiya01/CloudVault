@@ -18,8 +18,10 @@
                     {{ current_user['username'] }}
                     <span class="role-badge role-{{ current_user['role'] }}">{{ current_user['role'] }}</span>
                 </span>
-                <a href="{{ url_for('files.index') }}">My Files</a>
-                <a href="{{ url_for('auth.dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('files.index') }}" {% if request.path.startswith('/files') or request.path.startswith('/folders') %}aria-current="page" class="active"{% endif %}>My Files</a>
+                <a href="/recycle-bin" {% if request.path == '/recycle-bin' %}aria-current="page" class="active"{% endif %}>Recycle Bin</a>
+                <a href="/shares" {% if request.path == '/shares' %}aria-current="page" class="active"{% endif %}>Shared Links</a>
+                <a href="{{ url_for('auth.dashboard') }}" {% if request.path == url_for('auth.dashboard') %}aria-current="page" class="active"{% endif %}>Dashboard</a>
                 {% if current_user['role'] == 'admin' %}
                     <a href="{{ url_for('auth.admin') }}">Admin</a>
                 {% endif %}

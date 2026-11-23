@@ -71,6 +71,17 @@ a:focus {
     font-weight: 500;
 }
 
+.site-nav a:hover,
+.site-nav a:focus {
+    color: var(--cv-accent);
+}
+
+.site-nav a.active,
+.site-nav a[aria-current="page"] {
+    color: var(--cv-accent);
+    font-weight: 600;
+}
+
 .nav-user {
     color: var(--cv-muted);
     display: inline-flex;
@@ -931,4 +942,300 @@ html[data-saver="on"] .file-table th {
     margin-top: 1.25rem;
     margin-bottom: 0;
 }
+
+/* Stage 6: Recycle Bin and Shared Links ---------------------------------- */
+
+.page-heading-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* Quota warning banner */
+.quota-warning-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    background: rgba(251, 191, 36, 0.12);
+    border: 1px solid rgba(251, 191, 36, 0.35);
+    border-radius: var(--cv-radius);
+    padding: 0.85rem 1.1rem;
+    margin-bottom: 1.5rem;
+    color: #fef3c7;
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+
+.quota-warning-icon {
+    font-size: 1.2rem;
+    color: var(--cv-warning);
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.quota-warning-content strong {
+    color: var(--cv-warning);
+    display: inline;
+    margin-right: 0.35rem;
+}
+
+/* Status message banner */
+.recycle-status-message,
+.shares-status-message {
+    padding: 0.75rem 1rem;
+    border-radius: var(--cv-radius);
+    margin-bottom: 1.25rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.recycle-status-message.status-success,
+.shares-status-message.status-success {
+    background: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.4);
+    color: var(--cv-success);
+}
+
+.recycle-status-message.status-error,
+.shares-status-message.status-error {
+    background: rgba(248, 113, 113, 0.15);
+    border: 1px solid rgba(248, 113, 113, 0.4);
+    color: var(--cv-error);
+}
+
+.recycle-status-message.status-info,
+.shares-status-message.status-info {
+    background: rgba(56, 189, 248, 0.15);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    color: var(--cv-accent);
+}
+
+/* Loading & Error States */
+.loading-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--cv-muted);
+}
+
+.spinner {
+    width: 2rem;
+    height: 2rem;
+    margin: 0 auto 1rem;
+    border: 3px solid rgba(226, 232, 240, 0.15);
+    border-top-color: var(--cv-accent);
+    border-radius: 50%;
+    animation: cv-spin 0.8s linear infinite;
+}
+
+@keyframes cv-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.panel-error {
+    background: rgba(248, 113, 113, 0.08);
+    border: 1px solid rgba(248, 113, 113, 0.25);
+    border-radius: var(--cv-radius);
+    padding: 2rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.panel-error h3 {
+    margin-top: 0;
+    color: var(--cv-error);
+}
+
+.error-text {
+    color: var(--cv-text);
+    margin-bottom: 1rem;
+}
+
+.empty-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    line-height: 1;
+}
+
+.action-buttons-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+/* Create Share Card Box */
+.card-box {
+    background: var(--cv-surface-alt);
+    border: 1px solid var(--cv-border);
+    border-radius: var(--cv-radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.create-share-box .section-title {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.15rem;
+}
+
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-end;
+}
+
+.form-row .flex-grow {
+    flex: 1 1 18rem;
+}
+
+.create-share-form .form-actions {
+    margin-top: 1rem;
+}
+
+.custom-expiry-field {
+    margin-top: 0.75rem;
+    max-width: 22rem;
+}
+
+.required {
+    color: var(--cv-error);
+}
+
+/* Share Link in Table */
+.share-link-group {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    max-width: 22rem;
+}
+
+.share-url-input {
+    flex: 1 1 auto;
+    font-size: 0.82rem;
+    padding: 0.35rem 0.5rem;
+    background: var(--cv-surface);
+    border: 1px solid var(--cv-border);
+    border-radius: 4px;
+    color: var(--cv-text);
+    text-overflow: ellipsis;
+}
+
+.copy-btn {
+    white-space: nowrap;
+    padding: 0.35rem 0.65rem;
+}
+
+.btn-copied {
+    background: var(--cv-success) !important;
+    border-color: var(--cv-success) !important;
+    color: #fff !important;
+}
+
+/* Public Share Page Styling */
+.public-share-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(80vh - 4rem);
+    padding: 1rem 0;
+}
+
+.public-share-card {
+    background: var(--cv-surface);
+    border: 1px solid var(--cv-border);
+    border-radius: var(--cv-radius);
+    padding: 2.25rem;
+    width: 100%;
+    max-width: 32rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    text-align: center;
+}
+
+.share-download-block .share-header-icon {
+    font-size: 3rem;
+    margin-bottom: 0.75rem;
+    line-height: 1;
+}
+
+.public-filename {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin: 0.25rem 0 0.5rem;
+    word-break: break-word;
+    color: var(--cv-text);
+}
+
+.public-meta {
+    font-size: 0.88rem;
+    margin-bottom: 1.5rem;
+}
+
+.public-detail-list {
+    text-align: left;
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background: var(--cv-surface-alt);
+    border: 1px solid var(--cv-border);
+    border-radius: var(--cv-radius);
+}
+
+.public-detail-list dt {
+    color: var(--cv-muted);
+}
+
+.public-download-action {
+    margin: 1.75rem 0 1.25rem;
+}
+
+.btn-lg {
+    padding: 0.8rem 2.2rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+.public-security-note {
+    font-size: 0.8rem;
+    margin: 0;
+}
+
+/* Public Error State Card */
+.share-error-block .share-status-icon {
+    font-size: 3rem;
+    margin-bottom: 0.75rem;
+    line-height: 1;
+}
+
+.share-error-title {
+    font-size: 1.35rem;
+    margin: 0 0 0.75rem;
+}
+
+.status-card-expired .share-error-title {
+    color: var(--cv-warning);
+}
+
+.status-card-revoked .share-error-title,
+.status-card-invalid .share-error-title {
+    color: var(--cv-error);
+}
+
+.share-error-message {
+    color: var(--cv-text);
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.share-error-hint {
+    font-size: 0.85rem;
+    margin-bottom: 1.5rem;
+}
+
+.public-actions {
+    margin-top: 1.5rem;
+}
+
 

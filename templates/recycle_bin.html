@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Recycle Bin — CloudVault{% endblock %}
+
+{% block content %}
+<section class="panel recycle-bin-page" data-recycle-bin-page>
+    <div class="page-heading">
+        <div>
+            <h1>Recycle Bin</h1>
+            <p class="muted">Review, restore or permanently delete files.</p>
+        </div>
+        <div class="page-heading-actions">
+            <button type="button" class="btn btn-secondary btn-sm" data-refresh-btn aria-label="Refresh recycle bin">
+                Refresh
+            </button>
+            <button type="button" class="btn btn-danger btn-sm" data-purge-btn style="display: none;">
+                Purge expired (&gt; 30 days)
+            </button>
+        </div>
+    </div>
+
+    <!-- Storage Quota Notice -->
+    <div class="quota-warning-banner" role="note" aria-labelledby="quota-notice-title">
+        <div class="quota-warning-icon" aria-hidden="true">ℹ</div>
+        <div class="quota-warning-content">
+            <strong id="quota-notice-title">Recycle bin storage notice:</strong>
+            <span>Deleted files still occupy storage space and count toward your quota until they are permanently deleted or purged.</span>
+        </div>
+    </div>
+
+    <!-- Status / Notification message banner -->
+    <div class="recycle-status-message" data-status-message role="status" aria-live="polite" style="display: none;"></div>
+
+    <!-- Loading State -->
+    <div class="loading-state" data-loading-state>
+        <div class="spinner" aria-hidden="true"></div>
+        <p>Loading deleted files...</p>
+    </div>
+
+    <!-- Error State -->
+    <div class="error-state panel-error" data-error-state style="display: none;">
+        <h3>Unable to load recycle bin</h3>
+        <p class="error-text" data-error-text>An error occurred while fetching your deleted files.</p>
+        <button type="button" class="btn btn-secondary btn-sm" data-retry-btn>Try again</button>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" data-empty-state style="display: none;">
+        <div class="empty-icon" aria-hidden="true">🗑</div>
+        <p>Your recycle bin is empty.</p>
+        <p class="muted">Files moved to the recycle bin will appear here for 30 days before permanent deletion.</p>
+        <p><a class="btn btn-secondary btn-sm" href="{{ url_for('files.index') }}">Go to My Files</a></p>
+    </div>
+
+    <!-- Content Table -->
+    <div class="table-wrap" data-table-wrap style="display: none;">
+        <table class="file-table" aria-label="Recycled files">
+            <thead>
+                <tr>
+                    <th scope="col">Filename</th>
+                    <th scope="col" class="col-meta">MIME Type</th>
+                    <th scope="col" class="col-meta">Size</th>
+                    <th scope="col">Deleted date</th>
+                    <th scope="col">Retention remaining</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody data-items-tbody>
+                <!-- Rendered dynamically by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Confirmation Dialog -->
+    <dialog id="recycle-confirm-dialog" class="cv-dialog" aria-labelledby="recycle-dialog-title" aria-describedby="recycle-dialog-desc">
+        <div class="cv-dialog-content">
+            <h3 id="recycle-dialog-title">Confirm Action</h3>
+            <p id="recycle-dialog-desc">Are you sure you want to proceed?</p>
+            <div class="dialog-warning" data-dialog-warning style="display: none;">
+                <strong>Warning:</strong> <span data-dialog-warning-text>This action cannot be undone.</span>
+            </div>
+            <div class="button-row dialog-actions">
+                <button type="button" class="btn btn-secondary" data-dialog-cancel>Cancel</button>
+                <button type="button" class="btn btn-danger" data-dialog-confirm>Confirm</button>
+            </div>
+        </div>
+    </dialog>
+</section>
+
+<script src="{{ url_for('static', filename='js/recycle_bin.js') }}"></script>
+{% endblock %}

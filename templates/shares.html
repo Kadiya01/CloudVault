@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Shared Links — CloudVault{% endblock %}
+
+{% block content %}
+<section class="panel shares-page" data-shares-page>
+    <div class="page-heading">
+        <div>
+            <h1>Shared Links</h1>
+            <p class="muted">Manage and create public download links for your files.</p>
+        </div>
+        <div class="page-heading-actions">
+            <button type="button" class="btn btn-secondary btn-sm" data-refresh-shares-btn aria-label="Refresh share links">
+                Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Create Share Form Card -->
+    <div class="card-box create-share-box">
+        <h2 class="section-title">Create a new share link</h2>
+        <form class="create-share-form" data-create-share-form>
+            <div class="form-row">
+                <div class="form-field flex-grow">
+                    <label for="share-file-select">Select file to share <span class="required">*</span></label>
+                    <select id="share-file-select" name="file_id" required data-share-file-select>
+                        <option value="">Loading your active files...</option>
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label for="share-expiry-preset">Link expiration <span class="required">*</span></label>
+                    <select id="share-expiry-preset" name="expiry_preset" data-expiry-preset>
+                        <option value="1h">1 hour</option>
+                        <option value="24h" selected>24 hours (1 day)</option>
+                        <option value="7d">7 days</option>
+                        <option value="30d">30 days</option>
+                        <option value="custom">Custom date and time...</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Custom expiry date/time (shown when 'custom' is selected) -->
+            <div class="form-field custom-expiry-field" data-custom-expiry-wrap style="display: none;">
+                <label for="share-custom-expiry">Custom expiration (UTC / local)</label>
+                <input type="datetime-local" id="share-custom-expiry" name="custom_expires_at" data-custom-expiry-input>
+                <small class="muted">Expiration must be set to a future date and time.</small>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary" data-create-submit-btn>
+                    Create Share Link
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Status message banner -->
+    <div class="shares-status-message" data-shares-status role="status" aria-live="polite" style="display: none;"></div>
+
+    <!-- Loading State -->
+    <div class="loading-state" data-shares-loading>
+        <div class="spinner" aria-hidden="true"></div>
+        <p>Loading your share links...</p>
+    </div>
+
+    <!-- Error State -->
+    <div class="error-state panel-error" data-shares-error style="display: none;">
+        <h3>Unable to load share links</h3>
+        <p class="error-text" data-shares-error-text>An error occurred while fetching your shared links.</p>
+        <button type="button" class="btn btn-secondary btn-sm" data-shares-retry-btn>Try again</button>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" data-shares-empty style="display: none;">
+        <div class="empty-icon" aria-hidden="true">🔗</div>
+        <p>No share links created yet.</p>
+        <p class="muted">Generate public links with customized expiration dates to share files securely.</p>
+    </div>
+
+    <!-- Shares Table -->
+    <div class="table-wrap" data-shares-table-wrap style="display: none;">
+        <h2 class="section-title">Your Share Links</h2>
+        <table class="file-table" aria-label="Shared links list">
+            <thead>
+                <tr>
+                    <th scope="col">File</th>
+                    <th scope="col">Share Link</th>
+                    <th scope="col" class="col-meta">Created</th>
+                    <th scope="col">Expires</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody data-shares-tbody>
+                <!-- Populated dynamically by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Confirmation Dialog for Revocation -->
+    <dialog id="share-confirm-dialog" class="cv-dialog" aria-labelledby="share-dialog-title" aria-describedby="share-dialog-desc">
+        <div class="cv-dialog-content">
+            <h3 id="share-dialog-title">Revoke Share Link</h3>
+            <p id="share-dialog-desc">Are you sure you want to revoke access to this link?</p>
+            <div class="dialog-warning">
+                <strong>Warning:</strong> Anyone attempting to use this link will immediately be blocked from downloading the file. This action cannot be undone.
+            </div>
+            <div class="button-row dialog-actions">
+                <button type="button" class="btn btn-secondary" data-dialog-cancel>Cancel</button>
+                <button type="button" class="btn btn-danger" data-dialog-confirm>Confirm Revoke</button>
+            </div>
+        </div>
+    </dialog>
+</section>
+
+<script src="{{ url_for('static', filename='js/shares.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}
+    {% if error_state %}
+        Link Unavailable — CloudVault
+    {% elif file %}
+        Download {{ file['original_filename'] }} — CloudVault
+    {% else %}
+        Shared Download — CloudVault
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<section class="public-share-page" data-public-share-page>
+    <div class="public-share-card">
+        {% if error_state %}
+            <!-- Expired / Revoked / Invalid Error Views -->
+            <div class="share-error-block status-card status-card-{{ error_state }}">
+                <div class="share-status-icon" aria-hidden="true">
+                    {% if error_state == 'expired' %}
+                        ⏳
+                    {% elif error_state == 'revoked' %}
+                        🚫
+                    {% else %}
+                        🔍
+                    {% endif %}
+                </div>
+
+                <h1 class="share-error-title">
+                    {% if error_state == 'expired' %}
+                        Link Expired
+                    {% elif error_state == 'revoked' %}
+                        Link Revoked
+                    {% else %}
+                        Invalid or Unknown Link
+                    {% endif %}
+                </h1>
+
+                <p class="share-error-message">
+                    {% if error_state == 'expired' %}
+                        This shared link expired on {{ expires_at or 'a previous date' }} and is no longer active.
+                    {% elif error_state == 'revoked' %}
+                        This shared link was revoked by the file owner and is no longer accessible.
+                    {% else %}
+                        The requested share link does not exist, has been permanently removed, or the link URL is incomplete.
+                    {% endif %}
+                </p>
+
+                <p class="share-error-hint muted">
+                    If you require this file, please contact the person who provided this link and request an active share link.
+                </p>
+
+                <div class="public-actions">
+                    <a class="btn btn-secondary" href="{{ url_for('index') }}">Go to CloudVault Home</a>
+                </div>
+            </div>
+
+        {% elif file %}
+            <!-- Active Valid Share View (Server-rendered fallback or populated template) -->
+            <div class="share-download-block">
+                <div class="share-header-icon" aria-hidden="true">📄</div>
+                <h1 class="public-filename" title="{{ file['original_filename'] }}">
+                    {{ file['original_filename'] }}
+                </h1>
+                <p class="public-meta muted">
+                    Shared via CloudVault &bull; Secure download
+                </p>
+
+                <dl class="detail-list public-detail-list">
+                    <dt>File size</dt>
+                    <dd>{{ file['size_bytes'] | filesizeformat }} ({{ file['size_bytes'] }} bytes)</dd>
+                    
+                    <dt>File type</dt>
+                    <dd>{{ file['mime_type'] }}</dd>
+
+                    <dt>Link expires</dt>
+                    <dd data-share-expiry="{{ expires_at }}">{{ expires_at }}</dd>
+                </dl>
+
+                <div class="public-download-action">
+                    <a class="btn btn-primary btn-lg" href="{{ url_for('shares.download_shared_file', token=token) }}" download>
+                        Download File
+                    </a>
+                </div>
+            </div>
+        {% else %}
+            <!-- Client-rendered container when loaded via frontend JS or dynamic token lookup -->
+            <div data-public-share-container>
+                <div class="loading-state" data-share-loading>
+                    <div class="spinner" aria-hidden="true"></div>
+                    <p>Validating shared link...</p>
+                </div>
+                <div class="error-state panel-error" data-share-error style="display: none;">
+                    <div class="share-status-icon" aria-hidden="true">🔍</div>
+                    <h2 class="share-error-title" data-error-title>Link Unavailable</h2>
+                    <p class="error-text" data-error-message>The requested link could not be verified.</p>
+                    <p class="muted">Please verify the URL or contact the owner for an updated link.</p>
+                    <div class="public-actions">
+                        <a class="btn btn-secondary" href="{{ url_for('index') }}">Return to CloudVault</a>
+                    </div>
+                </div>
+                <div class="share-download-block" data-share-content style="display: none;">
+                    <div class="share-header-icon" aria-hidden="true">📄</div>
+                    <h1 class="public-filename" data-file-name>—</h1>
+                    <p class="public-meta muted">Shared via CloudVault &bull; Secure download</p>
+
+                    <dl class="detail-list public-detail-list">
+                        <dt>File size</dt>
+                        <dd data-file-size>—</dd>
+
+                        <dt>File type</dt>
+                        <dd data-file-type>—</dd>
+
+                        <dt>Link expires</dt>
+                        <dd data-file-expires>—</dd>
+                    </dl>
+
+                    <div class="public-download-action">
+                        <a class="btn btn-primary btn-lg" data-download-btn href="#" download>
+                            Download File
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<script src="{{ url_for('static', filename='js/public_share.js') }}"></script>
+{% endblock %}
