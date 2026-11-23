@@ -203,15 +203,11 @@
             return;
         }
 
-        var hasExpired = false;
-
         files.forEach(function (file) {
             var tr = document.createElement("tr");
 
+            // This countdown is informational only. The server decides purge eligibility.
             var retention = computeRetentionInfo(file.deleted_at);
-            if (retention.isExpired) {
-                hasExpired = true;
-            }
 
             // Filename
             var tdName = document.createElement("td");
@@ -285,8 +281,9 @@
         });
 
         tableWrapEl.style.display = "block";
+        // Show the action whenever deleted files exist; the server enforces the 30-day rule.
         if (purgeBtn) {
-            purgeBtn.style.display = hasExpired ? "inline-block" : "none";
+            purgeBtn.style.display = "inline-block";
         }
     }
 
