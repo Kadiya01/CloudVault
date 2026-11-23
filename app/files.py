@@ -31,6 +31,7 @@ from werkzeug.utils import secure_filename
 
 from . import database
 from .auth import login_required
+from .versioning import create_initial_backup, remove_expired_backups
 
 bp = Blueprint("files", __name__)
 
@@ -465,6 +466,8 @@ def upload_file():
             return _redirect_folder(folder_id)
 
         final_path = _user_storage_dir(user_id) / stored_name
+        created_backup = None
+        expired_backups = []
         try:
             os.replace(temp_path, final_path)
         except OSError:
@@ -472,7 +475,7 @@ def upload_file():
             return _redirect_folder(folder_id)
 
         try:
-            connection.execute(
+            cursor = connection.execute(
                 "INSERT INTO files (user_id, folder_id, original_filename, "
                 "stored_filename, size_bytes, mime_type, checksum_sha256) "
                 "VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -486,14 +489,21 @@ def upload_file():
                     digest.hexdigest(),
                 ),
             )
+            file_id = cursor.lastrowid
+            created_backup, expired_backups = create_initial_backup(
+                connection, user_id, file_id, final_path
+            )
             _recalculate_used_bytes(connection, user_id)
             connection.commit()
-        except sqlite3.Error:
+        except (sqlite3.Error, OSError):
             connection.rollback()
+            if created_backup is not None:
+                created_backup.unlink(missing_ok=True)
             final_path.unlink(missing_ok=True)
-            flash("The file could not be recorded. Please try again.", "error")
+            flash("The file and its initial backup could not be recorded. Please try again.", "error")
         else:
-            flash(f"'{safe_name}' uploaded.", "success")
+            remove_expired_backups(expired_backups)
+            flash(f"'{safe_name}' uploaded with its initial backup.", "success")
     finally:
         if temp_path.exists():
             temp_path.unlink(missing_ok=True)
