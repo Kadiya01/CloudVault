@@ -56,6 +56,18 @@ def create_initial_backup(connection, user_id, file_id, source_path):
             os.fsync(target.fileno())
 
         checksum = digest.hexdigest()
+        file_row = connection.execute(
+            "SELECT size_bytes, checksum_sha256 FROM files "
+            "WHERE id = ? AND user_id = ?",
+            (file_id, user_id),
+        ).fetchone()
+        if (
+            file_row is None
+            or size != file_row["size_bytes"]
+            or checksum != file_row["checksum_sha256"]
+        ):
+            raise OSError("The stored file changed while its initial backup was created.")
+
         next_number = connection.execute(
             "SELECT COALESCE(MAX(version_number), 0) + 1 "
             "FROM file_versions WHERE file_id = ?",
