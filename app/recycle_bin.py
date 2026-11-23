@@ -142,10 +142,12 @@ def _finish_quarantine(moved):
 
 def _delete_one(connection, row, user_id):
     """Delete one file and its DB-cascaded metadata, preserving rollback safety."""
-    current_path = _storage_path(row)
-    backup_dir, backups = _backup_paths(connection, row)
-    moved = _quarantine([current_path, *backups])
+    moved = []
+    backup_dir = None
     try:
+        # Lock and re-check the row before touching disk. Without this ordering,
+        # a concurrent restore could reactivate the file after the initial
+        # lookup but before quarantine moves its physical file.
         connection.execute("BEGIN IMMEDIATE")
         fresh = connection.execute(
             "SELECT id FROM files WHERE id = ? AND user_id = ? AND status = 'deleted'",
@@ -153,8 +155,11 @@ def _delete_one(connection, row, user_id):
         ).fetchone()
         if fresh is None:
             connection.rollback()
-            _restore_quarantine(moved)
             return False
+
+        current_path = _storage_path(row)
+        backup_dir, backups = _backup_paths(connection, row)
+        moved = _quarantine([current_path, *backups])
 
         connection.execute(
             "INSERT INTO activity_logs "
