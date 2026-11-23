@@ -174,9 +174,9 @@ def create_share():
     expires_at = _db_timestamp(expiry)
     try:
         cursor = connection.execute(
-            "INSERT INTO shares (file_id, user_id, token, expires_at) "
-            "VALUES (?, ?, ?, ?)",
-            (file_id, user_id, token, expires_at),
+            "INSERT INTO shares (file_id, user_id, token, expires_at, created_at) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (file_id, user_id, token, expires_at, created_at),
         )
         share_id = cursor.lastrowid
         connection.execute(
