@@ -93,7 +93,7 @@ def _stored_path(row):
     return path
 
 
-@bp.get("/shared-links")
+@bp.get("/shares")
 @api_login_required
 def shared_links_page():
     return render_template("shares.html")
