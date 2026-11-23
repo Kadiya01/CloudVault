@@ -11,16 +11,29 @@ import os
 import re
 import shutil
 import uuid
+from functools import wraps
 from pathlib import Path
 
 from flask import Blueprint, abort, current_app, g, jsonify, request
 
-from .auth import login_required
+from . import database
 
 bp = Blueprint("versions", __name__)
 CHUNK_SIZE = 64 * 1024
 STORED_NAME_RE = re.compile(r"^[0-9a-f]{32}$")
 MAX_RETAINED_VERSIONS = 5
+
+
+def api_login_required(view):
+    """Require authentication and return JSON instead of a login redirect."""
+
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if g.get("user") is None:
+            return jsonify(error="Authentication required."), 401
+        return view(*args, **kwargs)
+
+    return wrapped
 
 
 def _hash_file(path):
@@ -139,7 +152,7 @@ def _latest_check(connection, version_id):
 
 
 @bp.get("/api/files/<int:file_id>/versions")
-@login_required
+@api_login_required
 def list_versions(file_id):
     connection = database.get_db()
     user_id = g.user["id"]
@@ -217,7 +230,7 @@ def list_versions(file_id):
 
 
 @bp.post("/api/files/<int:file_id>/versions/<int:version_id>/restore")
-@login_required
+@api_login_required
 def restore_version(file_id, version_id):
     connection = database.get_db()
     user_id = g.user["id"]
