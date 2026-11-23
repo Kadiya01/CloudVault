@@ -2,8 +2,8 @@
 
 Stage 2 adds authentication, sessions and role-based access control on top of
 the Stage 1 database foundation. Stage 3 adds ownership-checked file, folder
-and tag management. Stage 4 adds resumable 2 MB chunked uploads. Versioned
-backups and sharing belong to later stages and are intentionally absent.
+and tag management. Stage 4 adds resumable 2 MB chunked uploads. Stage 5 adds verified,
+versioned backups and restoration. Sharing belongs to a later stage.
 """
 
 import os
@@ -13,7 +13,7 @@ from pathlib import Path
 import click
 from flask import Flask, g, redirect, render_template, url_for
 
-from . import auth, database, files, uploads
+from . import auth, database, files, uploads, versions
 from .csrf import generate_csrf_token, protect_state_changing_requests
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -49,6 +49,7 @@ def create_app(test_config=None):
     app.register_blueprint(auth.bp)
     app.register_blueprint(files.bp)
     app.register_blueprint(uploads.bp)
+    app.register_blueprint(versions.bp)
 
     @app.context_processor
     def inject_auth_context():
