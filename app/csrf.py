@@ -43,7 +43,9 @@ def validate_csrf():
 
 
 def protect_state_changing_requests():
-    """before_request hook validating CSRF on state-changing methods."""
+    """Validate API authentication before CSRF, then protect all mutations."""
     if request.method in PROTECTED_METHODS:
+        if request.path.startswith("/api/") and session.get("user_id") is None:
+            return jsonify(error="Authentication required."), 401
         return validate_csrf()
     return None
