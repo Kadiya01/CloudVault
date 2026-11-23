@@ -15,6 +15,7 @@ from pathlib import Path
 from flask import Blueprint, current_app, g, jsonify, render_template, request
 
 from . import database
+from .auth import login_required
 
 bp = Blueprint("recycle_bin", __name__)
 RETENTION_DAYS = 30
@@ -193,7 +194,7 @@ def _delete_one(connection, row, user_id):
 
 
 @bp.get("/recycle-bin")
-@api_login_required
+@login_required
 def recycle_bin_page():
     return render_template("recycle_bin.html")
 
