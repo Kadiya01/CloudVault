@@ -12,7 +12,7 @@ from datetime import datetime, timedelta, timezone
 from functools import wraps
 from pathlib import Path
 
-from flask import Blueprint, current_app, g, jsonify, request
+from flask import Blueprint, current_app, g, jsonify, render_template, request
 
 from . import database
 
@@ -190,6 +190,12 @@ def _delete_one(connection, row, user_id):
     except OSError:
         pass
     return True
+
+
+@bp.get("/recycle-bin")
+@api_login_required
+def recycle_bin_page():
+    return render_template("recycle_bin.html")
 
 
 @bp.get("/api/recycle-bin")
