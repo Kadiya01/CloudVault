@@ -165,6 +165,20 @@ def list_versions(file_id):
     ).fetchall()
 
     latest_number = rows[0]["version_number"] if rows else 0
+    restored_version_ids = set()
+    restore_logs = connection.execute(
+        "SELECT details FROM activity_logs WHERE user_id = ? "
+        "AND action = 'file_version_restored' AND entity_type = 'file' "
+        "AND entity_id = ?",
+        (user_id, file_id),
+    ).fetchall()
+    for log_row in restore_logs:
+        try:
+            details = json.loads(log_row["details"] or "{}")
+            restored_version_ids.add(int(details["restored_version_id"]))
+        except (TypeError, ValueError, KeyError, json.JSONDecodeError):
+            continue
+
     versions = [{
         "id": None,
         "version_number": latest_number + 1,
@@ -188,7 +202,7 @@ def list_versions(file_id):
             "size_bytes": row["size_bytes"],
             "created_at": row["created_at"],
             "is_current": False,
-            "is_restored": False,
+            "is_restored": row["id"] in restored_version_ids,
             "backup_status": "backed_up" if backup_status == "ok" else backup_status,
             "checksum_status": backup_status,
         })
