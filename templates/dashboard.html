@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — CloudVault{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <h1>Your dashboard</h1>
+    <p class="muted">Welcome back, {{ current_user['username'] }}.</p>
+
+    <dl class="detail-list">
+        <dt>Username</dt>
+        <dd>{{ current_user['username'] }}</dd>
+        <dt>Email</dt>
+        <dd>{{ current_user['email'] }}</dd>
+        <dt>Role</dt>
+        <dd><span class="role-badge role-{{ current_user['role'] }}">{{ current_user['role'] }}</span></dd>
+        <dt>Storage quota</dt>
+        <dd>{{ current_user['quota_bytes'] }} bytes</dd>
+    </dl>
+
+    <p>
+        <a class="btn btn-primary" href="{{ url_for('files.index') }}">Open My Files</a>
+    </p>
+</section>
+{% endblock %}

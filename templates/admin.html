@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Administration — CloudVault{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <h1>Administrator area</h1>
+    <p class="muted">This page is restricted to accounts with the administrator role.</p>
+
+    <dl class="detail-list">
+        <dt>Registered accounts</dt>
+        <dd>{{ user_count }}</dd>
+        <dt>Signed in as</dt>
+        <dd>{{ current_user['username'] }}</dd>
+    </dl>
+
+    <p class="muted">Full administration tools are implemented in a later stage.</p>
+</section>
+{% endblock %}

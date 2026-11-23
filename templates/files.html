@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+{% block title %}My Files — CloudVault{% endblock %}
+
+{% block content %}
+<section class="files-page" data-files-page>
+    <div class="page-heading">
+        <h1>My Files</h1>
+        <button type="button" class="btn btn-secondary btn-sm" data-view-toggle aria-pressed="false">
+            Compact view: off
+        </button>
+    </div>
+
+    <div class="quota-block">
+        <div class="quota-head">
+            <span>Storage used</span>
+            <span>{{ used_bytes | filesizeformat }} of {{ quota_bytes | filesizeformat }}</span>
+        </div>
+        <div class="quota-bar" role="progressbar" aria-label="Storage used"
+             aria-valuenow="{{ quota_percent }}" aria-valuemin="0" aria-valuemax="100">
+            <span style="width: {{ quota_percent }}%"></span>
+        </div>
+    </div>
+
+    <div class="toolbar">
+        <details class="action-popover">
+            <summary class="btn btn-primary">New folder</summary>
+            <form method="post" action="{{ url_for('files.create_folder') }}" class="popover-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                {% if current_folder %}
+                    <input type="hidden" name="parent_id" value="{{ current_folder['id'] }}">
+                {% endif %}
+                <label for="new-folder-name">Folder name</label>
+                <input id="new-folder-name" name="name" type="text" maxlength="255" required>
+                <button type="submit" class="btn btn-primary btn-sm">Create folder</button>
+            </form>
+        </details>
+
+        <details class="action-popover">
+            <summary class="btn btn-primary">Upload file</summary>
+            <form method="post" action="{{ url_for('files.upload_file') }}"
+                  enctype="multipart/form-data" class="popover-form"
+                  data-upload-form>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                {% if current_folder %}
+                    <input type="hidden" name="folder_id" value="{{ current_folder['id'] }}">
+                {% endif %}
+                <label for="upload-file">Choose a file</label>
+                <input id="upload-file" name="file" type="file" required data-upload-input>
+                <small class="muted">
+                    Allowed: {{ allowed_extensions | join(', ') }}. Files are sent in
+                    resumable 2 MB chunks when JavaScript is available.
+                </small>
+                <button type="submit" class="btn btn-primary btn-sm" data-upload-submit>Upload</button>
+            </form>
+        </details>
+
+        <details class="action-popover">
+            <summary class="btn btn-secondary">New tag</summary>
+            <form method="post" action="{{ url_for('files.create_tag') }}" class="popover-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                {% if current_folder %}
+                    <input type="hidden" name="return_folder_id" value="{{ current_folder['id'] }}">
+                {% endif %}
+                <label for="new-tag-name">Tag name</label>
+                <input id="new-tag-name" name="name" type="text" maxlength="50" required>
+                <button type="submit" class="btn btn-secondary btn-sm">Create tag</button>
+            </form>
+        </details>
+
+        <form method="get" class="search-form"
+              action="{% if current_folder %}{{ url_for('files.index', folder_id=current_folder['id']) }}{% else %}{{ url_for('files.index') }}{% endif %}">
+            <label class="sr-only" for="file-search">Search filenames</label>
+            <input id="file-search" name="search" type="search" value="{{ search }}"
+                   placeholder="Search filenames">
+            <label class="sr-only" for="tag-filter">Filter by tag</label>
+            <select id="tag-filter" name="tag">
+                <option value="">All tags</option>
+                {% for tag in tags %}
+                    <option value="{{ tag['id'] }}" {% if active_tag == tag['id'] %}selected{% endif %}>
+                        {{ tag['name'] }}
+                    </option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
+        </form>
+    </div>
+
+    <section class="transfer-panel" data-transfer-panel aria-live="polite" hidden>
+        <div class="transfer-head">
+            <strong data-transfer-filename>Upload</strong>
+            <span data-transfer-percent>0%</span>
+        </div>
+        <div class="quota-bar" role="progressbar" aria-label="Upload progress"
+             aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
+             data-transfer-progress>
+            <span data-transfer-bar style="width: 0%"></span>
+        </div>
+        <p class="transfer-status" data-transfer-status role="status">Ready.</p>
+        <div class="button-row">
+            <button type="button" class="btn btn-secondary btn-sm"
+                    data-transfer-resume hidden>Resume upload</button>
+            <button type="button" class="btn btn-secondary btn-sm"
+                    data-transfer-retry hidden>Retry failed chunks</button>
+        </div>
+    </section>
+
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <a href="{{ url_for('files.index') }}">My Files</a>
+        {% for crumb in breadcrumbs %}
+            <span aria-hidden="true">/</span>
+            <a href="{{ url_for('files.index', folder_id=crumb['id']) }}">{{ crumb['name'] }}</a>
+        {% endfor %}
+    </nav>
+
+    {% if folders %}
+        <h2 class="section-title">Folders</h2>
+        <ul class="item-list">
+            {% for folder in folders %}
+                <li class="item-row">
+                    <div class="item-main">
+                        <a class="item-name" href="{{ url_for('files.index', folder_id=folder['id']) }}">
+                            {{ folder['name'] }}
+                        </a>
+                    </div>
+                    <details class="row-actions">
+                        <summary>Folder actions</summary>
+                        <div class="row-action-body">
+                            <form method="post" class="stacked-form"
+                                  action="{{ url_for('files.rename_folder', folder_id=folder['id']) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <label for="rename-folder-{{ folder['id'] }}">Rename</label>
+                                <input id="rename-folder-{{ folder['id'] }}" name="name" type="text"
+                                       value="{{ folder['name'] }}" maxlength="255" required>
+                                <button type="submit" class="btn btn-secondary btn-sm">Save name</button>
+                            </form>
+                            <form method="post" class="stacked-form"
+                                  action="{{ url_for('files.move_folder', folder_id=folder['id']) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <label for="move-folder-{{ folder['id'] }}">Move to</label>
+                                <select id="move-folder-{{ folder['id'] }}" name="parent_id">
+                                    <option value="">My Files (root)</option>
+                                    {% for candidate in all_folders %}
+                                        {% if candidate['id'] != folder['id'] %}
+                                            <option value="{{ candidate['id'] }}"
+                                                    {% if folder['parent_id'] == candidate['id'] %}selected{% endif %}>
+                                                {{ candidate['name'] }}
+                                            </option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="btn btn-secondary btn-sm">Move</button>
+                            </form>
+                        </div>
+                    </details>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    {% if files %}
+        <h2 class="section-title">Files</h2>
+        <div class="table-wrap">
+            <table class="file-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Name</th>
+                        <th scope="col" class="col-meta">Type</th>
+                        <th scope="col" class="col-meta">Size</th>
+                        <th scope="col" class="col-meta">Created</th>
+                        <th scope="col">Tags</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in files %}
+                        <tr>
+                            <td data-label="Name">
+                                <a href="{{ url_for('files.file_detail', file_id=file['id']) }}">
+                                    {{ file['original_filename'] }}
+                                </a>
+                            </td>
+                            <td data-label="Type" class="col-meta">{{ file['mime_type'] }}</td>
+                            <td data-label="Size" class="col-meta">{{ file['size_bytes'] | filesizeformat }}</td>
+                            <td data-label="Created" class="col-meta">{{ file['created_at'][:10] }}</td>
+                            <td data-label="Tags">
+                                {% for tag in file_tags.get(file['id'], []) %}
+                                    <span class="tag-badge">{{ tag['name'] }}</span>
+                                {% else %}
+                                    <span class="muted">&mdash;</span>
+                                {% endfor %}
+                            </td>
+                            <td data-label="Actions">
+                                <details class="row-actions">
+                                    <summary>File actions</summary>
+                                    <div class="row-action-body">
+                                        <a class="btn btn-secondary btn-sm"
+                                           href="{{ url_for('files.download_file', file_id=file['id']) }}">
+                                            Download
+                                        </a>
+                                        <form method="post" class="stacked-form"
+                                              action="{{ url_for('files.rename_file', file_id=file['id']) }}">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                            <label for="rename-file-{{ file['id'] }}">Rename</label>
+                                            <input id="rename-file-{{ file['id'] }}" name="name" type="text"
+                                                   value="{{ file['original_filename'] }}" maxlength="255" required>
+                                            <button type="submit" class="btn btn-secondary btn-sm">Save name</button>
+                                        </form>
+                                        <form method="post" class="stacked-form"
+                                              action="{{ url_for('files.move_file', file_id=file['id']) }}">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                            <label for="move-file-{{ file['id'] }}">Move to</label>
+                                            <select id="move-file-{{ file['id'] }}" name="folder_id">
+                                                <option value="">My Files (root)</option>
+                                                {% for candidate in all_folders %}
+                                                    <option value="{{ candidate['id'] }}"
+                                                            {% if file['folder_id'] == candidate['id'] %}selected{% endif %}>
+                                                        {{ candidate['name'] }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                            <button type="submit" class="btn btn-secondary btn-sm">Move</button>
+                                        </form>
+                                        <form method="post" class="stacked-form"
+                                              action="{{ url_for('files.delete_file', file_id=file['id']) }}"
+                                              data-confirm="Move '{{ file['original_filename'] }}' to the recycle bin?">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                        </form>
+                                    </div>
+                                </details>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% elif not folders %}
+        <div class="empty-state">
+            <p>This location is empty.</p>
+            <p class="muted">Create a folder or upload a file to get started.</p>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

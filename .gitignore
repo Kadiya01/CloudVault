@@ -1,0 +1,63 @@
+# Python virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# SQLite / instance database files
+instance/*.db
+instance/*.sqlite
+instance/*.sqlite3
+*.db-journal
+*.sqlite-journal
+
+# Runtime uploaded files
+storage/*
+!storage/.gitkeep
+
+# Temporary upload chunks
+temporary_uploads/*
+!temporary_uploads/.gitkeep
+
+# Runtime backup files
+backup/*
+!backup/.gitkeep
+
+# Test caches and coverage output
+coverage.xml
+nosetests.xml
+test-results/
+.pytest_cache/
+
+# IDE / editor local settings
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Log in — CloudVault{% endblock %}
+
+{% block content %}
+<section class="auth-card">
+    <h1>Log in</h1>
+    <p class="muted">Use your username or email address.</p>
+
+    <form method="post" action="{{ url_for('auth.login') }}" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        <div class="form-field">
+            <label for="identifier">Username or email</label>
+            <input type="text" id="identifier" name="identifier" autocomplete="username"
+                   required value="{{ request.form.get('identifier', '') }}">
+        </div>
+
+        <div class="form-field">
+            <label for="password">Password</label>
+            <div class="password-wrap">
+                <input type="password" id="password" name="password"
+                       autocomplete="current-password" required>
+                <button type="button" class="toggle-password" data-password-toggle="password"
+                        aria-label="Show password">Show</button>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Log in</button>
+    </form>
+
+    <p class="auth-alt">No account yet? <a href="{{ url_for('auth.register') }}">Register</a></p>
+</section>
+{% endblock %}

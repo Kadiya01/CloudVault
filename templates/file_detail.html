@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}{{ file['original_filename'] }} — CloudVault{% endblock %}
+
+{% block content %}
+<section class="panel file-detail">
+    <p class="breadcrumbs">
+        <a href="{{ url_for('files.index') }}">My Files</a>
+        <span aria-hidden="true">/</span>
+        <a href="{% if file['folder_id'] %}{{ url_for('files.index', folder_id=file['folder_id']) }}{% else %}{{ url_for('files.index') }}{% endif %}">
+            {% if file['folder_id'] %}Folder{% else %}Root{% endif %}
+        </a>
+    </p>
+
+    <div class="page-heading">
+        <h1>{{ file['original_filename'] }}</h1>
+        <span class="status-badge status-{{ file['status'] }}">{{ file['status'] }}</span>
+    </div>
+
+    <dl class="detail-list">
+        <dt>Size</dt>
+        <dd>{{ file['size_bytes'] | filesizeformat }} ({{ file['size_bytes'] }} bytes)</dd>
+        <dt>Type</dt>
+        <dd>{{ file['mime_type'] }}</dd>
+        <dt>Checksum (SHA-256)</dt>
+        <dd class="mono">{{ file['checksum_sha256'] }}</dd>
+        <dt>Uploaded</dt>
+        <dd>{{ file['created_at'] }}</dd>
+        <dt>Last updated</dt>
+        <dd>{{ file['updated_at'] }}</dd>
+        <dt>Deletion time</dt>
+        <dd>{{ file['deleted_at'] or '—' }}</dd>
+    </dl>
+
+    <div class="button-row">
+        {% if file['status'] == 'active' %}
+            <a class="btn btn-primary" href="{{ url_for('files.download_file', file_id=file['id']) }}">
+                Download file
+            </a>
+        {% endif %}
+    </div>
+
+    <h2 class="section-title">Tags</h2>
+    <div class="tag-row">
+        {% for tag in file_tags %}
+            <span class="tag-badge">
+                {{ tag['name'] }}
+                <button type="submit" form="remove-tag-{{ tag['id'] }}" class="tag-remove"
+                        aria-label="Remove tag {{ tag['name'] }}">&times;</button>
+            </span>
+            <form id="remove-tag-{{ tag['id'] }}" method="post" class="inline-form"
+                  action="{{ url_for('files.remove_tag_from_file', file_id=file['id'], tag_id=tag['id']) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" name="return_file_id" value="{{ file['id'] }}">
+            </form>
+        {% else %}
+            <span class="muted">No tags assigned.</span>
+        {% endfor %}
+    </div>
+
+    {% if all_tags %}
+        <form method="post" class="inline-form"
+              action="{{ url_for('files.add_tag_to_file', file_id=file['id']) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="return_file_id" value="{{ file['id'] }}">
+            <label class="sr-only" for="assign-tag">Assign tag</label>
+            <select id="assign-tag" name="tag_id" required>
+                <option value="">Choose a tag</option>
+                {% for tag in all_tags %}
+                    <option value="{{ tag['id'] }}">{{ tag['name'] }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-secondary btn-sm">Assign tag</button>
+        </form>
+    {% endif %}
+
+    <form method="post" action="{{ url_for('files.create_tag') }}" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="return_file_id" value="{{ file['id'] }}">
+        <label class="sr-only" for="detail-new-tag">New tag name</label>
+        <input id="detail-new-tag" name="name" type="text" maxlength="50" placeholder="New tag" required>
+        <button type="submit" class="btn btn-secondary btn-sm">Create tag</button>
+    </form>
+
+    <details class="action-popover detail-actions">
+        <summary class="btn btn-secondary">Manage file</summary>
+        <div class="row-action-body">
+            <form method="post" class="stacked-form"
+                  action="{{ url_for('files.rename_file', file_id=file['id']) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <label for="detail-rename">Rename</label>
+                <input id="detail-rename" name="name" type="text"
+                       value="{{ file['original_filename'] }}" maxlength="255" required>
+                <button type="submit" class="btn btn-secondary btn-sm">Save name</button>
+            </form>
+            <form method="post" class="stacked-form"
+                  action="{{ url_for('files.move_file', file_id=file['id']) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <label for="detail-move">Move to</label>
+                <select id="detail-move" name="folder_id">
+                    <option value="">My Files (root)</option>
+                    {% for folder in folders %}
+                        <option value="{{ folder['id'] }}"
+                                {% if file['folder_id'] == folder['id'] %}selected{% endif %}>
+                            {{ folder['name'] }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-secondary btn-sm">Move</button>
+            </form>
+            {% if file['status'] == 'active' %}
+                <form method="post"
+                      action="{{ url_for('files.delete_file', file_id=file['id']) }}"
+                      data-confirm="Move '{{ file['original_filename'] }}' to the recycle bin?">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button type="submit" class="btn btn-danger btn-sm">Delete file</button>
+                </form>
+            {% endif %}
+        </div>
+    </details>
+
+    <section class="version-history-section" data-versions-section data-file-id="{{ file['id'] }}" aria-labelledby="versions-heading">
+        <div class="version-section-header">
+            <h2 id="versions-heading" class="section-title">Version History</h2>
+            <span class="status-badge" data-versions-count aria-live="polite">Loading...</span>
+        </div>
+        <p class="section-description">
+            CloudVault retains up to 5 previous backup versions for this file. Restoring an earlier version replaces the current file content.
+        </p>
+
+        <p class="versions-status" data-versions-status role="status" aria-live="polite"></p>
+
+        <div data-versions-list>
+            <div class="empty-state">
+                <p>Loading version history...</p>
+            </div>
+        </div>
+
+        <dialog id="restore-confirm-dialog" class="cv-dialog" aria-labelledby="dialog-title" aria-describedby="dialog-desc">
+            <div class="cv-dialog-content">
+                <h3 id="dialog-title">Confirm File Restoration</h3>
+                <p id="dialog-desc">
+                    You are about to restore <strong data-dialog-version-number>v1</strong> (created <span data-dialog-version-date>—</span>).
+                </p>
+                <div class="dialog-warning">
+                    <strong>Warning:</strong> Restoring this version will replace the current file contents. A backup copy of the current file will be preserved in version history.
+                </div>
+                <div class="button-row dialog-actions">
+                    <button type="button" class="btn btn-secondary" data-dialog-cancel>Cancel</button>
+                    <button type="button" class="btn btn-danger" data-dialog-confirm>Confirm Restore</button>
+                </div>
+            </div>
+        </dialog>
+    </section>
+</section>
+    <script src="{{ url_for('static', filename='js/versions.js') }}"></script>
+{% endblock %}

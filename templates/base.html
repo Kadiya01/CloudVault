@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>{% block title %}CloudVault{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+    <header class="site-header">
+        <div class="brand">
+            <a href="{{ url_for('index') }}">CloudVault</a>
+        </div>
+        <nav class="site-nav" aria-label="Main navigation">
+            {% if current_user %}
+                <span class="nav-user">
+                    {{ current_user['username'] }}
+                    <span class="role-badge role-{{ current_user['role'] }}">{{ current_user['role'] }}</span>
+                </span>
+                <a href="{{ url_for('files.index') }}">My Files</a>
+                <a href="{{ url_for('auth.dashboard') }}">Dashboard</a>
+                {% if current_user['role'] == 'admin' %}
+                    <a href="{{ url_for('auth.admin') }}">Admin</a>
+                {% endif %}
+                <button type="button" class="link-button" data-saver-toggle aria-pressed="false">
+                    Data Saver: off
+                </button>
+                <form method="post" action="{{ url_for('auth.logout') }}" class="inline-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button type="submit" class="link-button">Log out</button>
+                </form>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}">Log in</a>
+                <a href="{{ url_for('auth.register') }}">Register</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-list" role="status">
+                    {% for category, message in messages %}
+                        <p class="flash flash-{{ category }}">{{ message }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/uploads.js') }}"></script>
+</body>
+</html>
