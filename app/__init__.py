@@ -13,7 +13,7 @@ from pathlib import Path
 import click
 from flask import Flask, g, redirect, render_template, url_for
 
-from . import auth, database, files, uploads, versions
+from . import auth, database, files, recycle_bin, shares, uploads, versions
 from .csrf import generate_csrf_token, protect_state_changing_requests
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -50,6 +50,8 @@ def create_app(test_config=None):
     app.register_blueprint(files.bp)
     app.register_blueprint(uploads.bp)
     app.register_blueprint(versions.bp)
+    app.register_blueprint(recycle_bin.bp)
+    app.register_blueprint(shares.bp)
 
     @app.context_processor
     def inject_auth_context():

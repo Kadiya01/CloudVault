@@ -76,6 +76,15 @@
         return { key: "active", label: "Active", badgeClass: "status-success" };
     }
 
+    function formatDateTimeLocal(date) {
+        var pad = function (n) { return n < 10 ? "0" + n : String(n); };
+        return date.getFullYear() + "-" +
+            pad(date.getMonth() + 1) + "-" +
+            pad(date.getDate()) + "T" +
+            pad(date.getHours()) + ":" +
+            pad(date.getMinutes());
+    }
+
     function calculateExpiresAtUTC(preset, customValue) {
         var now = new Date();
         if (preset === "1h") {
@@ -105,14 +114,9 @@
                     customExpiryInput.required = true;
                     // Default to 1 day from now
                     var defaultDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
-                    // Format for datetime-local: YYYY-MM-DDThh:mm
-                    var pad = function(n) { return n < 10 ? '0' + n : n; };
-                    customExpiryInput.min = new Date().toISOString().slice(0, 16);
-                    customExpiryInput.value = defaultDate.getFullYear() + '-' +
-                        pad(defaultDate.getMonth() + 1) + '-' +
-                        pad(defaultDate.getDate()) + 'T' +
-                        pad(defaultDate.getHours()) + ':' +
-                        pad(defaultDate.getMinutes());
+                    // datetime-local values are local wall-clock times, not UTC strings.
+                    customExpiryInput.min = formatDateTimeLocal(new Date());
+                    customExpiryInput.value = formatDateTimeLocal(defaultDate);
                 }
             } else {
                 if (customExpiryWrap) customExpiryWrap.style.display = "none";
