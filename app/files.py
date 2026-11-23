@@ -3,9 +3,8 @@
 All operations require an authenticated user and enforce ownership on the
 server. Physical files live under ``storage/<user_id>/`` and are never exposed
 as public static assets; downloads always pass an ownership check first.
-
-Resumable uploads (Stage 4), versioned backups (Stage 5) and permanent deletion
-/ restore / sharing (Stage 6) are intentionally not implemented here.
+Normal uploads create their initial versioned backup through the Stage 5
+versioning helper. Resumable uploads are implemented in app/uploads.py.
 """
 
 import hashlib
