@@ -157,7 +157,11 @@
             });
         })
         .catch(function (err) {
-            fileSelect.innerHTML = '<option value="">Select a file...</option>';
+            fileSelect.innerHTML = '<option value="">Could not load your files</option>';
+            setStatus(
+                "Could not load files available for sharing: " + (err.message || "Network error"),
+                "error"
+            );
         });
     }
 
