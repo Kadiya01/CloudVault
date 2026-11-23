@@ -129,9 +129,16 @@ def _verify_version(connection, version, user_id, file_id, record=False):
         status, actual, details = "missing", None, "Backup file is missing."
     else:
         try:
-            actual, _ = _hash_file(path)
-            status = "ok" if actual == version["checksum_sha256"] else "damaged"
-            details = None if status == "ok" else "SHA-256 checksum mismatch."
+            actual, actual_size = _hash_file(path)
+            checksum_ok = actual == version["checksum_sha256"]
+            size_ok = actual_size == version["size_bytes"]
+            status = "ok" if checksum_ok and size_ok else "damaged"
+            if status == "ok":
+                details = None
+            elif not checksum_ok:
+                details = "SHA-256 checksum mismatch."
+            else:
+                details = "File size mismatch."
         except OSError:
             status, actual, details = "missing", None, "Backup file could not be read."
     if record:
@@ -256,14 +263,21 @@ def restore_version(file_id, version_id):
         return jsonify({"error": "This backup is missing and cannot be restored."}), 400
 
     try:
-        selected_checksum, _ = _hash_file(selected_path)
+        selected_checksum, selected_size = _hash_file(selected_path)
     except OSError:
         selected_checksum, selected_size = None, None
-    if selected_checksum != selected["checksum_sha256"]:
+    checksum_ok = selected_checksum == selected["checksum_sha256"]
+    size_ok = selected_size == selected["size_bytes"]
+    if not checksum_ok or not size_ok:
+        details = (
+            "SHA-256 checksum mismatch."
+            if not checksum_ok
+            else "File size mismatch."
+        )
         _record_backup_check(
             connection, selected["id"], user_id, "damaged",
             selected["checksum_sha256"], selected_checksum,
-            "SHA-256 checksum mismatch.",
+            details,
         )
         connection.commit()
         return jsonify({"error": "Backup verification failed. The file was not changed."}), 400
@@ -308,8 +322,10 @@ def restore_version(file_id, version_id):
 
         # Stage restored bytes beside the live file, then atomically replace it.
         restored_checksum, restored_size = _copy_file(selected_path, restore_temp)
-        if restored_checksum != fresh_version["checksum_sha256"]:
-            raise OSError("Backup checksum changed during restoration.")
+        checksum_ok = restored_checksum == fresh_version["checksum_sha256"]
+        size_ok = restored_size == fresh_version["size_bytes"]
+        if not checksum_ok or not size_ok:
+            raise OSError("Backup checksum or size changed during restoration.")
         os.replace(restore_temp, current_path)
         replacement_done = True
 
