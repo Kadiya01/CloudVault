@@ -363,7 +363,8 @@
         })
         .then(function (data) {
             isBusy = false;
-            setStatus(data.message || "Action completed successfully.", "success");
+            var statusType = data.success === false ? "error" : "success";
+            setStatus(data.message || "Action completed successfully.", statusType);
             loadRecycleBin();
         })
         .catch(function (err) {
