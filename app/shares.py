@@ -172,6 +172,10 @@ def create_share():
     token = secrets.token_urlsafe(32)
     created_at = _db_timestamp(now)
     expires_at = _db_timestamp(expiry)
+    # Database timestamps have millisecond precision. Reject an expiry that
+    # becomes equal to creation time after normalisation.
+    if expires_at <= created_at:
+        return jsonify(error="Expiration must be later than the current time."), 400
     try:
         cursor = connection.execute(
             "INSERT INTO shares (file_id, user_id, token, expires_at, created_at) "
