@@ -15,7 +15,6 @@ from pathlib import Path
 
 from flask import Blueprint, abort, current_app, g, jsonify, request
 
-from . import database
 from .auth import login_required
 
 bp = Blueprint("versions", __name__)
@@ -244,7 +243,7 @@ def restore_version(file_id, version_id):
         return jsonify({"error": "This backup is missing and cannot be restored."}), 400
 
     try:
-        selected_checksum, selected_size = _hash_file(selected_path)
+        selected_checksum, _ = _hash_file(selected_path)
     except OSError:
         selected_checksum, selected_size = None, None
     if selected_checksum != selected["checksum_sha256"]:
@@ -269,7 +268,6 @@ def restore_version(file_id, version_id):
     try:
         connection.execute("BEGIN IMMEDIATE")
         # Re-read under the write lock to avoid racing another restore.
-        fresh_file = _owned_file_or_404(connection, file_id, user_id)
         fresh_version = connection.execute(
             "SELECT * FROM file_versions WHERE id = ? AND file_id = ?",
             (version_id, file_id),
@@ -337,9 +335,10 @@ def restore_version(file_id, version_id):
         # Keep the five newest historical snapshots; delete old files only
         # after the database transaction commits successfully.
         old_rows = connection.execute(
-            "SELECT id, backup_path FROM file_versions WHERE file_id = ? "
+            "SELECT id, backup_path FROM file_versions "
+            "WHERE file_id = ? AND id <> ? "
             "ORDER BY version_number DESC, id DESC LIMIT -1 OFFSET ?",
-            (file_id, MAX_RETAINED_VERSIONS),
+            (file_id, version_id, MAX_RETAINED_VERSIONS - 1),
         ).fetchall()
         old_paths = [
             _backup_path_for_row(row, user_id, file_id) for row in old_rows
