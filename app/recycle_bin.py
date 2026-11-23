@@ -46,7 +46,7 @@ def _parse_utc(value):
 
 def _expired(deleted_at, now=None):
     deleted = _parse_utc(deleted_at)
-    return deleted is None or (now or _utcnow()) >= deleted + timedelta(days=RETENTION_DAYS)
+    return deleted is not None and (now or _utcnow()) >= deleted + timedelta(days=RETENTION_DAYS)
 
 
 def _owned_deleted_file(connection, file_id, user_id):
@@ -232,13 +232,13 @@ def restore_deleted_file(file_id):
 
     try:
         connection.execute("BEGIN IMMEDIATE")
-        connection.execute(
+        cursor = connection.execute(
             "UPDATE files SET status = 'active', deleted_at = NULL, "
             "updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') "
             "WHERE id = ? AND user_id = ? AND status = 'deleted'",
             (file_id, user_id),
         )
-        if connection.total_changes == 0:
+        if cursor.rowcount != 1:
             connection.rollback()
             return jsonify(error="Deleted file not found."), 404
         connection.execute(
